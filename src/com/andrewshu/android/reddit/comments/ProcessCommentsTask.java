@@ -117,6 +117,26 @@ public class ProcessCommentsTask extends AsyncTask<Void, Integer, Void> {
 	 */
     private CharSequence createSpanned(String bodyHtml) {
     	try {
+    		String htmlSelfTextReplaced = ""; 
+    		
+			int pre_start = 0;
+			int pre_end = 0;
+			while(true) {
+				pre_start = bodyHtml.indexOf("&lt;pre&gt;");
+				pre_end = bodyHtml.indexOf("&lt;/pre&gt;");
+				
+				if (pre_start > 0 && pre_end > pre_start) {
+					htmlSelfTextReplaced += bodyHtml.substring(0, pre_start) +
+							bodyHtml.substring(pre_start, pre_end+12).replace(" ", "&nbsp;").replace("\n", "<br>");
+				} else {
+					break;
+				}
+				
+				bodyHtml = bodyHtml.substring(pre_end + 12);
+			}
+			htmlSelfTextReplaced += bodyHtml;
+			bodyHtml = htmlSelfTextReplaced;
+    		
     		// get unescaped HTML
     		bodyHtml = Html.fromHtml(bodyHtml).toString();
     		// fromHtml doesn't support all HTML tags. convert <code> and <pre>
