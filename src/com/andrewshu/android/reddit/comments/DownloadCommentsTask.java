@@ -323,7 +323,27 @@ public class DownloadCommentsTask extends AsyncTask<Integer, Long, Boolean>
 
 		if (data.isIs_self() && data.getSelftext_html() != null) {
 			// HTML to Spanned
-			String unescapedHtmlSelftext = Html.fromHtml(data.getSelftext_html()).toString();
+			String htmlPreBlockText = data.getSelftext_html();
+			String htmlSelfTextReplaced = ""; 
+		
+			int pre_start = 0;
+			int pre_end = 0;
+			while(true) {
+				pre_start = htmlPreBlockText.indexOf("&lt;pre&gt;");
+				pre_end = htmlPreBlockText.indexOf("&lt;/pre&gt;");
+				
+				if (pre_start > 0 && pre_end > pre_start) {
+					htmlSelfTextReplaced += htmlPreBlockText.substring(0, pre_start) +
+							htmlPreBlockText.substring(pre_start, pre_end+12).replace(" ", "&nbsp;").replace("\n", "<br>");
+				} else {
+					break;
+				}
+				
+				htmlPreBlockText = htmlPreBlockText.substring(pre_end + 12);
+			}
+			htmlSelfTextReplaced += htmlPreBlockText;
+					
+			String unescapedHtmlSelftext = Html.fromHtml(htmlSelfTextReplaced).toString();
 			Spanned selftext = Html.fromHtml(Util.convertHtmlTags(unescapedHtmlSelftext));
 			
     		// remove last 2 newline characters
