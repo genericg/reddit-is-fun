@@ -52,7 +52,8 @@ public class RedditSettings {
 	private String homepage = Constants.FRONTPAGE_STRING;
 	private boolean useExternalBrowser = false;
 	private boolean showCommentGuideLines = true;
-	private boolean confirmQuit = true;
+	private boolean confirmQuitOrLogout = true;
+	private boolean saveHistory = true;
 	private boolean alwaysShowNextPrevious = true;
 	
 	private int threadDownloadLimit = Constants.DEFAULT_THREAD_DOWNLOAD_LIMIT;
@@ -132,9 +133,12 @@ public class RedditSettings {
     	
     	// Use external browser instead of BrowserActivity
     	editor.putBoolean(Constants.PREF_USE_EXTERNAL_BROWSER, this.useExternalBrowser);
-    	
+
     	// Show confirmation dialog when backing out of root Activity
-    	editor.putBoolean(Constants.PREF_CONFIRM_QUIT, this.confirmQuit);
+    	editor.putBoolean(Constants.PREF_CONFIRM_QUIT, this.confirmQuitOrLogout);
+
+    	// Save reddit history to Browser history
+    	editor.putBoolean(Constants.PREF_SAVE_HISTORY, this.saveHistory);
     	
     	// Whether to always show the next/previous buttons, or only at bottom of list
     	editor.putBoolean(Constants.PREF_ALWAYS_SHOW_NEXT_PREVIOUS, this.alwaysShowNextPrevious);
@@ -199,9 +203,12 @@ public class RedditSettings {
         
     	// Use external browser instead of BrowserActivity
         this.setUseExternalBrowser(sessionPrefs.getBoolean(Constants.PREF_USE_EXTERNAL_BROWSER, false));
-        
+
     	// Show confirmation dialog when backing out of root Activity
-        this.setConfirmQuit(sessionPrefs.getBoolean(Constants.PREF_CONFIRM_QUIT, true));
+        this.setConfirmQuitOrLogout(sessionPrefs.getBoolean(Constants.PREF_CONFIRM_QUIT, true));
+
+        // Save reddit history to Browser history
+        this.setSaveHistory(sessionPrefs.getBoolean(Constants.PREF_SAVE_HISTORY, true));
         
     	// Whether to always show the next/previous buttons, or only at bottom of list
         this.setAlwaysShowNextPrevious(sessionPrefs.getBoolean(Constants.PREF_ALWAYS_SHOW_NEXT_PREVIOUS, true));
@@ -229,6 +236,20 @@ public class RedditSettings {
         // Notifications
         this.setMailNotificationStyle(sessionPrefs.getString(Constants.PREF_MAIL_NOTIFICATION_STYLE, Constants.PREF_MAIL_NOTIFICATION_STYLE_DEFAULT));
         this.setMailNotificationService(sessionPrefs.getString(Constants.PREF_MAIL_NOTIFICATION_SERVICE, Constants.PREF_MAIL_NOTIFICATION_SERVICE_OFF));
+    }
+    
+    public int getDialogTheme() {
+    	if (Util.isLightTheme(theme))
+    		return R.style.Reddit_Light_Dialog;
+    	else
+    		return R.style.Reddit_Dark_Dialog;
+    }
+    
+    public int getDialogNoTitleTheme() {
+    	if (Util.isLightTheme(theme))
+    		return R.style.Reddit_Light_Dialog_NoTitle;
+    	else
+    		return R.style.Reddit_Dark_Dialog_NoTitle;
     }
 
 	public boolean isLoggedIn() {
@@ -283,12 +304,20 @@ public class RedditSettings {
 		this.showCommentGuideLines = showCommentGuideLines;
 	}
 
-	public boolean isConfirmQuit() {
-		return confirmQuit;
+	public boolean isConfirmQuitOrLogout() {
+		return confirmQuitOrLogout;
 	}
 
-	public void setConfirmQuit(boolean confirmQuit) {
-		this.confirmQuit = confirmQuit;
+	public boolean isSaveHistory() {
+		return saveHistory;
+	}
+
+	public void setConfirmQuitOrLogout(boolean confirmQuitOrLogout) {
+		this.confirmQuitOrLogout = confirmQuitOrLogout;
+	}
+
+	public void setSaveHistory(boolean saveHistory) {
+		this.saveHistory = saveHistory;
 	}
 
 	public boolean isAlwaysShowNextPrevious() {

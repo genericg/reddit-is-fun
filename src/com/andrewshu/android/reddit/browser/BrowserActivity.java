@@ -228,7 +228,7 @@ public class BrowserActivity extends Activity {
         case R.id.open_browser_menu_id:
     		if (mUri == null)
     			break;
-    		Common.launchBrowser(this, mUri.toString(), null, false, true, true);
+    		Common.launchBrowser(this, mUri.toString(), null, false, true, true, false);
     		break;
         
         case R.id.close_browser_menu_id:
@@ -243,6 +243,10 @@ public class BrowserActivity extends Activity {
 			intent.putExtra(Constants.EXTRA_NUM_COMMENTS, Constants.DEFAULT_COMMENT_DOWNLOAD_LIMIT);
 			startActivity(intent);
         	break;
+        	
+    	case android.R.id.home:
+    		Common.goHome(this);
+    		break;
         	
         default:
     		throw new IllegalArgumentException("Unexpected action value "+item.getItemId());

@@ -52,6 +52,7 @@ import android.text.style.URLSpan;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
+import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -78,6 +79,7 @@ import com.andrewshu.android.reddit.comments.CommentsListActivity;
 import com.andrewshu.android.reddit.common.CacheInfo;
 import com.andrewshu.android.reddit.common.Common;
 import com.andrewshu.android.reddit.common.Constants;
+import com.andrewshu.android.reddit.common.FormValidation;
 import com.andrewshu.android.reddit.common.ProgressInputStream;
 import com.andrewshu.android.reddit.common.RedditIsFunHttpClientFactory;
 import com.andrewshu.android.reddit.common.tasks.VoteTask;
@@ -424,13 +426,18 @@ public final class ProfileActivity extends ListActivity
     	findViewById(R.id.loading_dark).setVisibility(View.GONE);
 
     	if (mSettings.isAlwaysShowNextPrevious()) {
-        	// Set mNextPreviousView to null; we can use findViewById(R.id.next_previous_layout).
-        	mNextPreviousView = null;
+    		if (mNextPreviousView != null) {
+    			getListView().removeFooterView(mNextPreviousView);
+    			mNextPreviousView = null;
+    		}
         } else {
-            // If we are not using the persistent navbar, then show as ListView footer instead
-	        LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-	        mNextPreviousView = inflater.inflate(R.layout.next_previous_list_item, null);
-	        getListView().addFooterView(mNextPreviousView);
+        	findViewById(R.id.next_previous_layout).setVisibility(View.GONE);
+        	if (getListView().getFooterViewsCount() == 0) {
+	            // If we are not using the persistent navbar, then show as ListView footer instead
+		        LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+		        mNextPreviousView = inflater.inflate(R.layout.next_previous_list_item, null);
+		        getListView().addFooterView(mNextPreviousView);
+        	}
         }
 
         synchronized (MESSAGE_ADAPTER_LOCK) {
@@ -484,7 +491,7 @@ public final class ProfileActivity extends ListActivity
     	if (karmaLayout != null && karmaLayoutBorder != null) {
     		karmaLayout.setVisibility(View.VISIBLE);
 	    	if (Util.isLightTheme(mSettings.getTheme())) {
-	       		karmaLayout.setBackgroundResource(R.color.white);
+	       		karmaLayout.setBackgroundResource(android.R.color.background_light);
 	       		karmaLayoutBorder.setBackgroundResource(R.color.black);
 	    	} else {
 	       		karmaLayoutBorder.setBackgroundResource(R.color.white);
@@ -1016,6 +1023,9 @@ public final class ProfileActivity extends ListActivity
     	case R.id.refresh_menu_id:
 			new DownloadProfileTask(mUsername).execute(Constants.DEFAULT_COMMENT_DOWNLOAD_LIMIT);
 			break;
+    	case android.R.id.home:
+    		Common.goHome(this);
+    		break;
     	}
     	
     	return true;
@@ -1042,8 +1052,19 @@ public final class ProfileActivity extends ListActivity
     		
     	case Constants.DIALOG_COMPOSE:
     		inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-    		builder = new AlertDialog.Builder(this);
+    		builder = new AlertDialog.Builder(new ContextThemeWrapper(this, mSettings.getDialogTheme()));
     		layout = inflater.inflate(R.layout.compose_dialog, null);
+    		
+    		Common.setTextColorFromTheme(
+    				mSettings.getTheme(),
+    				getResources(),
+    				(TextView) layout.findViewById(R.id.compose_destination_textview),
+    				(TextView) layout.findViewById(R.id.compose_subject_textview),
+    				(TextView) layout.findViewById(R.id.compose_message_textview),
+    				(TextView) layout.findViewById(R.id.compose_captcha_textview),
+    				(TextView) layout.findViewById(R.id.compose_captcha_loading)
+			);
+
     		final EditText composeDestination = (EditText) layout.findViewById(R.id.compose_destination_input);
     		final EditText composeSubject = (EditText) layout.findViewById(R.id.compose_subject_input);
     		final EditText composeText = (EditText) layout.findViewById(R.id.compose_text_input);
@@ -1057,23 +1078,10 @@ public final class ProfileActivity extends ListActivity
     		composeSendButton.setOnClickListener(new OnClickListener() {
 				public void onClick(View v) {
 		    		ThingInfo hi = new ThingInfo();
-		    		// reddit.com performs these sanity checks too.
-		    		if ("".equals(composeDestination.getText().toString().trim())) {
-		    			Toast.makeText(ProfileActivity.this, "please enter a username", Toast.LENGTH_LONG).show();
+		    		
+		    		if (!FormValidation.validateComposeMessageInputFields(ProfileActivity.this, composeDestination, composeSubject, composeText, composeCaptcha))
 		    			return;
-		    		}
-		    		if ("".equals(composeSubject.getText().toString().trim())) {
-		    			Toast.makeText(ProfileActivity.this, "please enter a subject", Toast.LENGTH_LONG).show();
-		    			return;
-		    		}
-		    		if ("".equals(composeText.getText().toString().trim())) {
-		    			Toast.makeText(ProfileActivity.this, "you need to enter a message", Toast.LENGTH_LONG).show();
-		    			return;
-		    		}
-		    		if (composeCaptcha.getVisibility() == View.VISIBLE && "".equals(composeCaptcha.getText().toString().trim())) {
-		    			Toast.makeText(ProfileActivity.this, "", Toast.LENGTH_LONG).show();
-		    			return;
-		    		}
+
 		    		hi.setDest(composeDestination.getText().toString().trim());
 		    		hi.setSubject(composeSubject.getText().toString().trim());
 		    		new MyMessageComposeTask(composeDialog, hi, composeCaptcha.getText().toString().trim())
@@ -1089,29 +1097,29 @@ public final class ProfileActivity extends ListActivity
     		break;
     		
     	case Constants.DIALOG_THREAD_CLICK:
-    		dialog = new ThreadClickDialog(this, R.style.NoTitleDialog);
+    		dialog = new ThreadClickDialog(this, mSettings);
 			break;
     		
    		// "Please wait"
     	case Constants.DIALOG_LOGGING_IN:
-    		pdialog = new ProgressDialog(this);
+    		pdialog = new ProgressDialog(new ContextThemeWrapper(this, mSettings.getDialogTheme()));
     		pdialog.setMessage("Logging in...");
     		pdialog.setIndeterminate(true);
-    		pdialog.setCancelable(false);
+    		pdialog.setCancelable(true);
     		dialog = pdialog;
     		break;
     	case Constants.DIALOG_REPLYING:
-    		pdialog = new ProgressDialog(this);
+    		pdialog = new ProgressDialog(new ContextThemeWrapper(this, mSettings.getDialogTheme()));
     		pdialog.setMessage("Sending reply...");
     		pdialog.setIndeterminate(true);
-    		pdialog.setCancelable(false);
+    		pdialog.setCancelable(true);
     		dialog = pdialog;
     		break;   		
     	case Constants.DIALOG_COMPOSING:
-    		pdialog = new ProgressDialog(this);
+    		pdialog = new ProgressDialog(new ContextThemeWrapper(this, mSettings.getDialogTheme()));
     		pdialog.setMessage("Composing message...");
     		pdialog.setIndeterminate(true);
-    		pdialog.setCancelable(false);
+    		pdialog.setCancelable(true);
     		dialog = pdialog;
     		break;
     		
@@ -1181,7 +1189,8 @@ public final class ProfileActivity extends ListActivity
 							Util.createThreadUri(threadThingInfo).toString(),
 							false,
 							false,
-							mSettings.isUseExternalBrowser()
+							mSettings.isUseExternalBrowser(),
+							mSettings.isSaveHistory()
 					);
 				}
 			};
@@ -1209,7 +1218,7 @@ public final class ProfileActivity extends ListActivity
 					// Launch Intent to goto the URL
 					Common.launchBrowser(ProfileActivity.this, info.getUrl(),
 							Util.createThreadUri(info).toString(),
-							false, false, fUseExternalBrowser);
+							false, false, fUseExternalBrowser, mSettings.isSaveHistory());
 				}
 			};
 		}

@@ -20,8 +20,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="com.andrewshu.android.reddit"
       
-      android:versionCode="80"
-      android:versionName="1.2.2"
+      android:versionCode="83"
+      android:versionName="1.3.0"
       >
 
     <uses-permission android:name="android.permission.INTERNET" />
@@ -30,7 +30,7 @@
 	<uses-permission android:name="com.android.browser.permission.READ_HISTORY_BOOKMARKS" />
     <uses-permission android:name="com.android.browser.permission.WRITE_HISTORY_BOOKMARKS" />
 	
-    <uses-sdk android:minSdkVersion="4" android:targetSdkVersion="10" />
+    <uses-sdk android:minSdkVersion="4" android:targetSdkVersion="11" />
 
     <supports-screens />
     
@@ -44,6 +44,7 @@
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="http" android:host="www.reddit.com" android:pathPattern="/r/.*/" />
                 <data android:scheme="http" android:host="redd.it" android:pathPattern="/" />
@@ -57,8 +58,14 @@
 	            <data android:scheme="http" android:host="www.reddit.com" android:pathPattern="/r/.*/comments/.*" />
 	            <data android:scheme="http" android:host="www.reddit.com" android:pathPrefix="/comments/" />
 	            <data android:scheme="http" android:host="www.reddit.com" android:pathPrefix="/tb/" />
-	            <data android:scheme="http" android:host="redd.it" android:pathPattern="/..*" />
 	        </intent-filter>
+            <!-- Separate filter because when added to above filter, the host is ignored -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="http" android:host="redd.it" android:pathPattern="/..*" />
+            </intent-filter>
 	    </activity>
 	    <activity android:name=".reddits.PickSubredditActivity"></activity>
 	    <activity android:name=".submit.SubmitLinkActivity">
@@ -79,7 +86,10 @@
 	        </intent-filter>
 	    </activity>
 	    <activity android:name=".settings.RedditPreferencesPage"></activity>
-	    <activity android:name=".browser.BrowserActivity" android:configChanges="keyboardHidden|orientation"></activity>
+	    <activity android:name=".browser.BrowserActivity"
+	              android:configChanges="keyboardHidden|orientation"
+	              android:hardwareAccelerated="true">
+	    </activity>
 	    <service android:name=".mail.EnvelopeService" android:label="@string/pref_mail_notification_service"></service>
 	    
 	    <receiver android:name=".mail.BootAlarmSetter">
@@ -87,5 +97,7 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
+        
+	    <meta-data android:name="com.google.android.backup.api_key" android:value="AEdPqrEAAAAIrd4RnBA8kUYJJVB22mBqXZPhyj0-SFigY4SqxA" />
 	</application>
 </manifest> 

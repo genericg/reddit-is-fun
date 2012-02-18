@@ -42,6 +42,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -112,9 +113,8 @@ public class Common {
 	public static void updateListDrawables(ListActivity la, int theme) {
 		ListView lv = la.getListView();
 		if (Util.isLightTheme(theme)) {
+			lv.setBackgroundResource(android.R.color.background_light);
     		lv.setSelector(R.drawable.list_selector_blue);
-        	// HACK: set background color directly for android 2.0
-        	lv.setBackgroundResource(R.color.white);
     	} else /* if (Common.isDarkTheme(theme)) */ {
     		lv.setSelector(android.R.drawable.list_selector_background);
     	}
@@ -137,7 +137,7 @@ public class Common {
 			if (shouldShow) {
 		    	if (nextPreviousView != null && nextPreviousBorder != null) {
 			    	if (Util.isLightTheme(settings.getTheme())) {
-			    		nextPreviousView.setBackgroundResource(R.color.white);
+			    		nextPreviousView.setBackgroundResource(android.R.color.background_light);
 			       		nextPreviousBorder.setBackgroundResource(R.color.black);
 			    	} else {
 			       		nextPreviousBorder.setBackgroundResource(R.color.white);
@@ -181,6 +181,17 @@ public class Common {
 	    	}
     	}
     }
+    
+    public static void setTextColorFromTheme(int theme, Resources resources, TextView... textViews) {
+    	int color;
+    	if (Util.isLightTheme(theme))
+    		color = resources.getColor(R.color.reddit_light_dialog_text_color);
+    	else
+    		color = resources.getColor(R.color.reddit_dark_dialog_text_color);
+    	for (TextView textView : textViews)
+    		textView.setTextColor(color);
+    }
+    
     
 	
     static void clearCookies(RedditSettings settings, HttpClient client, Context context) {
@@ -410,9 +421,16 @@ public class Common {
      * @param useExternalBrowser
      */
     public static void launchBrowser(Context context, String url, String threadUrl,
-    		boolean requireNewTask, boolean bypassParser, boolean useExternalBrowser) {
+			boolean requireNewTask, boolean bypassParser, boolean useExternalBrowser,
+			boolean saveHistory) {
     	
-    	Browser.updateVisitedHistory(context.getContentResolver(), url, true);
+    	try {
+			if (saveHistory) {
+				Browser.updateVisitedHistory(context.getContentResolver(), url, true);
+			}
+    	} catch (Exception ex) {
+    		if (Constants.LOGGING) Log.i(TAG, "Browser.updateVisitedHistory error", ex);
+    	}
     	
     	Uri uri = Uri.parse(url);
     	
@@ -497,13 +515,20 @@ public class Common {
 	}
     
     public static boolean isClicked(Context context, String url) {
-		Cursor cursor = context.getContentResolver().query(
-				Browser.BOOKMARKS_URI,
-				Browser.HISTORY_PROJECTION,
-				Browser.HISTORY_PROJECTION[Browser.HISTORY_PROJECTION_URL_INDEX] + "=?",
-				new String[]{ url },
-				null
-		);
+    	Cursor cursor;
+    	try {
+			cursor = context.getContentResolver().query(
+					Browser.BOOKMARKS_URI,
+					Browser.HISTORY_PROJECTION,
+					Browser.HISTORY_PROJECTION[Browser.HISTORY_PROJECTION_URL_INDEX] + "=?",
+					new String[]{ url },
+					null
+			);
+    	} catch (Exception ex) {
+    		if (Constants.LOGGING) Log.w(TAG, "Error querying Android Browser for history; manually revoked permission?", ex);
+    		return false;
+    	}
+    	
 		if (cursor != null) {
 	        boolean isClicked = cursor.moveToFirst();  // returns true if cursor is not empty
 	        cursor.close();
@@ -547,5 +572,13 @@ public class Common {
     		subreddit_id = children.get(0).get("data").get("subreddit_id").getTextValue();
     	}
     	return subreddit_id;
+    }
+
+    /** http://developer.android.com/guide/topics/ui/actionbar.html#Home */
+    public static void goHome(Activity activity) {
+    	// app icon in action bar clicked; go home
+        Intent intent = new Intent(activity, ThreadsListActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        activity.startActivity(intent);
     }
 }

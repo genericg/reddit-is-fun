@@ -1,9 +1,9 @@
 reddit is fun
 =============
 
-Android app to read reddit.com.
+Android app to read reddit.com. Original code by Andrew Shu (talklittle). [Licensed under GPLv3][license].
 
-Original code by Andrew Shu (talklittle). [Licensed under GPLv3][license].
+[![Pledgie Badge](http://www.pledgie.com/campaigns/10469.png?skin_name=chrome)][pledgie]
 
 Android Market QR Codes
 -----------------------
@@ -51,6 +51,10 @@ Contributors
 * joe0185
 * gebner
 * kushou
+* haroldb
+* megamark16
+* wesleywiser
 
 
 [license]: http://github.com/talklittle/reddit-is-fun/blob/master/COPYING
+[pledgie]: http://www.pledgie.com/campaigns/10469
